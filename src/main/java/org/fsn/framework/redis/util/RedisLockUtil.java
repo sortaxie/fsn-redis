@@ -1,4 +1,4 @@
-package com.adorgroup.framework.redis.util;
+package org.fsn.framework.redis.util;
 
 
 

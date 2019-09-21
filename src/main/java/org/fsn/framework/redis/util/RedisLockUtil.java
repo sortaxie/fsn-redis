@@ -1,8 +1,6 @@
 package org.fsn.framework.redis.util;
 
 
-
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 

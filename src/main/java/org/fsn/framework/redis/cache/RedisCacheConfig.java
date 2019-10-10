@@ -15,10 +15,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.*;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
@@ -29,39 +30,39 @@ import java.time.Duration;
 public class RedisCacheConfig  extends CachingConfigurerSupport {
     Logger logger = LoggerFactory.getLogger(RedisCacheConfig.class);
 
-    @Value("${spring.redis.database:0}")
-    private int database;
+//    @Value("${spring.redis.database:0}")
+//    private int database;
 
-    @Value("${spring.redis.host:localhost}")
+    @Value("${framework.redis.jedis.host:localhost}")
     private String host;
 
-    @Value("${spring.redis.port:6379}")
+    @Value("${framework.redis.jedis.port:6379}")
     private int port;
 
     //连接超时时间（毫秒）
-    @Value("${spring.redis.timeout:10000}")
+    @Value("${framework.redis.jedis.timeout:10000}")
     private int timeout;
 
     //连接池中的最大空闲连接
-    @Value("${spring.redis.jedis.pool.max-idle:8}")
+    @Value("${framework.redis.jedis.pool.max-idle:8}")
     private int maxIdle;
     //连接池中的最小空闲连接
-    @Value("${spring.redis.jedis.pool.min-idle:0}")
+    @Value("${framework.redis.jedis.pool.min-idle:0}")
     private int minIdle;
     //连接池最大阻塞等待时间（使用负值表示没有限制）
-    @Value("${spring.redis.jedis.pool.max-wait:-1}")
+    @Value("${framework.redis.jedis.pool.max-wait:-1}")
     private long maxWaitMillis;
 
-    @Value("${spring.redis.password:}")
+    @Value("${framework.redis.jedis.password:}")
     private String password;
     //设置默认过期时间
-    @Value("${spring.redis.expiration:3600}")
-    private long defaultExpiration;
+//    @Value("${spring.redis.expiration:3600}")
+//    private long defaultExpiration;
 
 
     //此注解用于只引用该包,不启用相关redis功能
 
-    @ConditionalOnProperty(prefix = "framework.redis.jedis", value = {"enable"}, havingValue = "true",matchIfMissing = true)
+    @ConditionalOnProperty(prefix = "framework.redis.jedis", value = {"enable"}, havingValue = "true")
     @Bean
     public JedisPool jedisPoolFactory() {
         logger.info("JedisPool inject success ");
@@ -79,25 +80,38 @@ public class RedisCacheConfig  extends CachingConfigurerSupport {
     @ConditionalOnProperty(prefix = "framework.redis", value = {"enable"}, havingValue = "true",matchIfMissing = true)
     @Bean
     public RedisTemplate redisTemplate(RedisConnectionFactory factory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
+
+        RedisTemplate<Object , Object> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
-
-        Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
-        ObjectMapper om = new ObjectMapper();
-        om.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        om.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
-        jackson2JsonRedisSerializer.setObjectMapper(om);
-
-        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
-        // key采用String的序列化方式
-        template.setKeySerializer(stringRedisSerializer);
-        // hash的key也采用String的序列化方式
-        template.setHashKeySerializer(stringRedisSerializer);
-        // value序列化方式采用jackson
-        template.setValueSerializer(jackson2JsonRedisSerializer);
-        // hash的value序列化方式采用jackson
-        template.setHashValueSerializer(jackson2JsonRedisSerializer);
-        template.afterPropertiesSet();
+        Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new
+                Jackson2JsonRedisSerializer(Object.class) ;
+        ObjectMapper om = new ObjectMapper() ;
+        om.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY) ;
+        om.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL) ;
+        jackson2JsonRedisSerializer.setObjectMapper(om) ;
+        template.setValueSerializer (jackson2JsonRedisSerializer);
+        template.setKeySerializer (new StringRedisSerializer());
+        template.afterPropertiesSet ();
+//
+//        RedisTemplate<String, Object> template = new RedisTemplate<>();
+//        template.setConnectionFactory(factory);
+//
+//        Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
+//        ObjectMapper om = new ObjectMapper();
+//        om.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+//        om.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
+//        jackson2JsonRedisSerializer.setObjectMapper(om);
+//
+//        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+//        // key采用String的序列化方式
+//        template.setKeySerializer(stringRedisSerializer);
+//        // hash的key也采用String的序列化方式
+//        template.setHashKeySerializer(stringRedisSerializer);
+//        // value序列化方式采用jackson
+//        template.setValueSerializer(jackson2JsonRedisSerializer);
+//        // hash的value序列化方式采用jackson
+//        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+//        template.afterPropertiesSet();
 
         return template;
     }

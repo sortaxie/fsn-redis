@@ -3,6 +3,7 @@ package org.fsn.framework.redis.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
@@ -19,7 +20,13 @@ public class RedisLock {
     @Resource
     private RedisTemplate redisTemplate;
 
+    @Value("${fsn.redis.waitLock.sleepTnterval:100}")
+    private Long sleepTnterval;
+
     public static final String UNLOCK_LUA;
+
+   // private static final long DEFAULTWAITTIME = 30000L; //默认30s 等待时间
+
 
     /**
      * 释放锁脚本，原子操作
@@ -37,17 +44,18 @@ public class RedisLock {
 
     /**
      * 获取分布式锁，原子操作
+     *
      * @param lockKey
      * @param requestId 唯一ID, 可以使用UUID.randomUUID().toString();
-     * @param expire  过期时间毫秒
+     * @param expire    过期时间毫秒
      * @return
      */
     public boolean getLock(String lockKey, String requestId, long expire) {
-        try{
+        try {
             RedisCallback<Boolean> callback = (connection) -> {
                 return connection.set(lockKey.getBytes(Charset.forName("UTF-8")), requestId.getBytes(Charset.forName("UTF-8")), Expiration.milliseconds(expire), RedisStringCommands.SetOption.SET_IF_ABSENT);
             };
-            return (Boolean)redisTemplate.execute(callback);
+            return (Boolean) redisTemplate.execute(callback);
         } catch (Exception e) {
             log.error("redis lock error.", e);
         }
@@ -55,20 +63,62 @@ public class RedisLock {
     }
 
     /**
+     *  等待分布式锁，原子操作
+     * @param lockKey
+     * @param requestId 唯一ID, 可以使用UUID.randomUUID().toString();
+     * @param expire 过期时间毫秒，也是等待时间
+     * @return
+     */
+    public boolean getWaitLock(String lockKey, String requestId, long waitTime,long expire) {
+        boolean result = false;
+        long waitedTime = 0L; //已经等待时间
+        while (true) {
+            try {
+                long startTime = System.currentTimeMillis();
+                RedisCallback<Boolean> callback = (connection) -> {
+                    return connection.set(lockKey.getBytes(Charset.forName("UTF-8")), requestId.getBytes(Charset.forName("UTF-8")), Expiration.milliseconds(expire), RedisStringCommands.SetOption.SET_IF_ABSENT);
+                };
+                result = (Boolean) redisTemplate.execute(callback);
+                long endTime = System.currentTimeMillis();
+                if (!result) {
+                    Thread.sleep(sleepTnterval);
+                    waitedTime = waitedTime + (endTime-startTime)+ sleepTnterval;
+                    if (waitedTime >= waitTime) {
+                        result = false;
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            } catch (Exception e) {
+                log.error("redis lock error.", e);
+                break;
+            }
+        }
+        return result;
+    }
+
+    public boolean getWaitLock(String lockKey, String requestId,long expire) {
+            return getWaitLock(lockKey,requestId,expire,expire);
+    }
+
+    /**
      * 释放锁
+     *
      * @param lockKey
      * @param requestId 唯一ID
      * @return
      */
     public boolean releaseLock(String lockKey, String requestId) {
         RedisCallback<Boolean> callback = (connection) -> {
-            return connection.eval(UNLOCK_LUA.getBytes(), ReturnType.BOOLEAN ,1, lockKey.getBytes(Charset.forName("UTF-8")), requestId.getBytes(Charset.forName("UTF-8")));
+            return connection.eval(UNLOCK_LUA.getBytes(), ReturnType.BOOLEAN, 1, lockKey.getBytes(Charset.forName("UTF-8")), requestId.getBytes(Charset.forName("UTF-8")));
         };
-        return (Boolean)redisTemplate.execute(callback);
+        return (Boolean) redisTemplate.execute(callback);
     }
 
     /**
      * 获取Redis锁的value值
+     *
      * @param lockKey
      * @return
      */
@@ -77,7 +127,7 @@ public class RedisLock {
             RedisCallback<String> callback = (connection) -> {
                 return new String(connection.get(lockKey.getBytes()), Charset.forName("UTF-8"));
             };
-            return (String)redisTemplate.execute(callback);
+            return (String) redisTemplate.execute(callback);
         } catch (Exception e) {
             log.error("get redis occurred an exception", e);
         }

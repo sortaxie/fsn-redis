@@ -32,9 +32,9 @@ public class RedissonLocker  implements  DistributedLock{
 
     //timeout为加锁时间，时间单位由unit确定
     @Override
-    public RLock lock(String lockKey, TimeUnit unit ,long timeout) {
+    public RLock lock(String lockKey, TimeUnit unit ,long leaseTime) {
         RLock lock = redissonClient.getLock(lockKey);
-        lock.lock(timeout, unit);
+        lock.lock(leaseTime, unit);
         return lock;
     }
     //tryLock()，马上返回，拿到lock就返回true，不然返回false。
@@ -54,6 +54,22 @@ public class RedissonLocker  implements  DistributedLock{
     public boolean tryLock(String lockKey, long waitTime, long leaseTime) {
         return tryLock(lockKey,TimeUnit.MILLISECONDS,waitTime,leaseTime);
     }
+
+    @Override
+    public boolean tryLock(String lockKey, long leaseTime) {
+        return tryLock(lockKey,0,leaseTime);
+    }
+
+    @Override
+    public boolean tryLock(String lockKey) {
+        return tryLock(lockKey,0,-1);
+    }
+
+    @Override
+    public boolean tryWaitLock(String lockKey, long waitTime) {
+        return tryLock(lockKey,waitTime,-1);
+    }
+
 
     @Override
     public void unlock(String lockKey) {

@@ -67,8 +67,9 @@ public class RedisCacheConfig  extends CachingConfigurerSupport {
 
     //此注解用于只引用该包,不启用相关redis功能
 
-    @ConditionalOnProperty(prefix = "framework.redis.jedis", value = {"enable"}, havingValue = "true")
+
     @Bean
+    @ConditionalOnProperty(prefix = "framework.redis.jedis", value = {"enable"}, havingValue = "true")
     public JedisPool jedisPoolFactory() {
         logger.info("JedisPool inject success ");
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();

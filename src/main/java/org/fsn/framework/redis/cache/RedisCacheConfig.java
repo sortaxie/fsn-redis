@@ -3,8 +3,10 @@ package org.fsn.framework.redis.cache;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.fsn.framework.redis.RedissonProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
@@ -59,6 +61,9 @@ public class RedisCacheConfig  extends CachingConfigurerSupport {
 //    @Value("${spring.redis.expiration:3600}")
 //    private long defaultExpiration;
 
+
+    @Autowired
+    private RedissonProperties redissonProperties;
 
     //此注解用于只引用该包,不启用相关redis功能
 

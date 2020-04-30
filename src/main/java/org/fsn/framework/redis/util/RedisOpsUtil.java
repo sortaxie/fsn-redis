@@ -29,12 +29,12 @@ public class RedisOpsUtil {
         return redisTemplate.opsForValue().setIfAbsent(key,value,timeout,unit);
     }
 
-    public <T> T get(String key,Class<?> T){
+    public <T> T get(String key){
         return (T)redisTemplate
                 .opsForValue().get(key);
     }
 
-    public String get(String key){
+    public String getStr(String key){
         return (String) redisTemplate
                 .opsForValue().get(key);
     }

@@ -2,6 +2,7 @@ package org.fsn.framework.redis.util;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
@@ -10,6 +11,7 @@ import java.util.concurrent.TimeUnit;
  * @date ：Created in 2020/4/26
  * @version: 1.0
  **/
+@Component
 public class RedisOpsUtil {
 
     @Autowired

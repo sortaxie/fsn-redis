@@ -16,20 +16,31 @@ public class CacheUtil {
     @Autowired
     private RedisOpsUtil redisOpsUtil;
 
-    public void set(String key, Object object) {
+
+    public void set(String key, Object object,long timeout) {
         try {
             localCache.setLocalCache(key, object);
-            redisOpsUtil.set(key, object, 3600, TimeUnit.SECONDS);
+            redisOpsUtil.set(key, object, timeout, TimeUnit.SECONDS);
         } catch (Exception e) {
             logger.error("cacheError:", e);
         }
+    }
+
+    public void set(String key, Object object) {
+        set(key,object,3600);
     }
 
     public <T> T get(String key) {
         Object object = localCache.get(key);
         if (object == null) {
             object = redisOpsUtil.get(key);
+            localCache.setLocalCache(key, object);
         }
         return (T) object;
+    }
+
+    public void delete(String key){
+        localCache.delete(key);
+        redisOpsUtil.delete(key);
     }
 }

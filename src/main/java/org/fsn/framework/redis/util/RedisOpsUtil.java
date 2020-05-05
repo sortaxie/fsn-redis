@@ -59,4 +59,8 @@ public class RedisOpsUtil {
                 .opsForValue().increment(key,delta);
     }
 
+    public  void  delete(String key){
+        redisTemplate.delete(key);
+    }
+
 }

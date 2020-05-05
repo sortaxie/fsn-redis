@@ -24,9 +24,11 @@ public class LocalCache {
                 //设置本地缓存容器的初始容量
                 .initialCapacity(10)
                 //设置本地缓存的最大容量
-                .maximumSize(500)
+                .maximumSize(5000)
                 //设置写缓存后多少秒过期
-                .expireAfterWrite(60, TimeUnit.SECONDS).build();
+                .expireAfterWrite(180, TimeUnit.SECONDS)
+                //如果缓存多少秒没有被读写则销毁
+                .expireAfterAccess(60,TimeUnit.SECONDS).build();
     }
 
 
@@ -36,6 +38,12 @@ public class LocalCache {
 
     public <T> T get(String key){
        return (T)localCache.getIfPresent(key);
+    }
+
+    public void delete(String key){
+        if(localCache!=null){
+            localCache.invalidate(key);
+        }
     }
 
 }

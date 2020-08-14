@@ -34,7 +34,11 @@ public class CacheUtil {
         Object object = localCache.get(key);
         if (object == null) {
             object = redisOpsUtil.get(key);
-            localCache.setLocalCache(key, object);
+            if(object!=null) {
+                localCache.setLocalCache(key, object);
+            }else{
+                return null;
+            }
         }
         return (T) object;
     }

@@ -62,6 +62,10 @@ public class RedisLock {
         return false;
     }
 
+    public boolean getLock(String lockKey,  long expire) {
+        return getLock(lockKey,String.valueOf(Thread.currentThread().getId()),expire);
+    }
+
     /**
      *  等待分布式锁，原子操作
      * @param lockKey
@@ -114,6 +118,11 @@ public class RedisLock {
             return connection.eval(UNLOCK_LUA.getBytes(), ReturnType.BOOLEAN, 1, lockKey.getBytes(Charset.forName("UTF-8")), requestId.getBytes(Charset.forName("UTF-8")));
         };
         return (Boolean) redisTemplate.execute(callback);
+    }
+
+
+    public boolean releaseLock(String lockKey) {
+        return releaseLock(lockKey,String.valueOf(Thread.currentThread().getId()));
     }
 
     /**
